@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Variation
+from .models import Product, Variation,ReviewRating
 
 class PruductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug':('product_name',)}
@@ -12,3 +12,4 @@ class VariationAdmin(admin.ModelAdmin):
 
 admin.site.register(Product,PruductAdmin)
 admin.site.register(Variation,VariationAdmin)
+admin.site.register(ReviewRating)
