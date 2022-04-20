@@ -1,6 +1,6 @@
 from unicodedata import category
 from django.shortcuts import get_object_or_404, redirect, render
-from .models import Product, ReviewRating
+from .models import Product, ProductGallery, ReviewRating
 from category.models import Category
 from carts.models import CartItem
 from carts.views import _cart_id
@@ -9,6 +9,7 @@ from django.db.models import Q
 from .forms import ReviewForm
 from django.contrib import messages
 from orders.models import OrderProduct
+
 
 def store(request, category_slug=None):
     categories = None
@@ -45,15 +46,21 @@ def product_detail(request, category_slug=None, product_slug=None):
         raise e
     if request.user.is_authenticated:
         try:
-            orderproduct = OrderProduct.objects.filter(user = request.user, product_id=single_product.id).exists()
+            orderproduct = OrderProduct.objects.filter(
+                user=request.user, product_id=single_product.id).exists()
         except OrderProduct.DoesNotExist:
             orderproduct = None
     else:
         orderproduct = None
-        
-    reviews = ReviewRating.objects.filter(product_id = single_product.id, status = True)
 
-    context = {'single_product': single_product, 'in_cart': in_cart, 'orderproduct':orderproduct,'reviews':reviews}
+    reviews = ReviewRating.objects.filter(
+        product_id=single_product.id, status=True)
+
+    product_gallery = ProductGallery.objects.filter(
+        product_id=single_product.id)
+
+    context = {'single_product': single_product, 'in_cart': in_cart,
+               'orderproduct': orderproduct, 'reviews': reviews, 'product_gallery': product_gallery}
     return render(request, 'store/product_detail.html', context)
 
 
@@ -66,7 +73,7 @@ def search(request):
         products = Product.objects.order_by('-created_date').filter(
             Q(description__icontains=keyword) | Q(product_name__icontains=keyword))
         product_count = products.count()
-    context = {'products': products, 'product_count':product_count,}
+    context = {'products': products, 'product_count': product_count, }
     return render(request, 'store/store.html', context)
 
 
@@ -74,10 +81,12 @@ def submit_review(request, product_id):
     url = request.META.get('HTTP_REFERER')
     if request.method == 'POST':
         try:
-            reviews = ReviewRating.objects.get(user__id=request.user.id, product__id=product_id)
-            form = ReviewForm(request.POST, instance = reviews)
+            reviews = ReviewRating.objects.get(
+                user__id=request.user.id, product__id=product_id)
+            form = ReviewForm(request.POST, instance=reviews)
             form.save()
-            messages.success(request, 'Thank you! Your review has been updated')
+            messages.success(
+                request, 'Thank you! Your review has been updated')
             return redirect(url)
 
         except ReviewRating.DoesNotExist:
@@ -91,7 +100,8 @@ def submit_review(request, product_id):
                 data.product_id = product_id
                 data.user_id = request.user.id
                 data.save()
-                
-                messages.success(request, 'Thank you! you review has been added')
-                
+
+                messages.success(
+                    request, 'Thank you! you review has been added')
+
             return redirect(url)
